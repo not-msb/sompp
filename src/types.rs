@@ -31,6 +31,12 @@ pub struct Grade {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Appointment {
+    #[serde(rename = "titel")]
+    pub title: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Students {
     pub items: Vec<Student>,
 }
@@ -43,4 +49,9 @@ pub struct Subjects {
 #[derive(Debug, Deserialize)]
 pub struct Grades {
     pub items: Vec<Grade>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Schedule {
+    pub items: Vec<Appointment>,
 }
