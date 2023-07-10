@@ -1,11 +1,11 @@
+use chrono::NaiveDate;
 use clap::Parser;
 use reqwest::{
     blocking::Client,
-    header::{self},
+    header::{self, HeaderMap, HeaderValue},
 };
 use sompp::types::*;
 use std::collections::HashMap;
-use chrono::NaiveDate;
 
 type Res<T> = Result<T, Box<dyn std::error::Error>>;
 
@@ -17,28 +17,31 @@ struct Args {
 
 struct User {
     client: Client,
-    access_token: String,
+    headers: HeaderMap,
 }
 
 impl User {
     fn new(access_token: String) -> Res<User> {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(&format!("Bearer {access_token}")).unwrap(),
+        );
+        headers.insert(header::ACCEPT, HeaderValue::from_static("application/json"));
+
         let user = User {
             client: reqwest::blocking::Client::new(),
-            access_token,
+            headers,
         };
 
         Ok(user)
     }
 
-    fn id(&self) -> Res<u64> {
+    fn id(&self) -> Res<usize> {
         let resp: Students = self
             .client
             .get("https://api.somtoday.nl/rest/v1/leerlingen")
-            .header(
-                header::AUTHORIZATION,
-                &format!("Bearer {}", self.access_token),
-            )
-            .header(header::ACCEPT, "application/json")
+            .headers(self.headers.clone())
             .send()?
             .json()?;
 
@@ -54,11 +57,7 @@ impl User {
         let resp: Subjects = self
             .client
             .get("https://api.somtoday.nl/rest/v1/vakken")
-            .header(
-                header::AUTHORIZATION,
-                &format!("Bearer {}", self.access_token),
-            )
-            .header(header::ACCEPT, "application/json")
+            .headers(self.headers.clone())
             .send()?
             .json()?;
 
@@ -76,11 +75,7 @@ impl User {
                     "https://api.somtoday.nl/rest/v1/resultaten/huidigVoorLeerling/{}",
                     self.id()?
                 ))
-                .header(
-                    header::AUTHORIZATION,
-                    &format!("Bearer {}", self.access_token),
-                )
-                .header(header::ACCEPT, "application/json")
+                .headers(self.headers.clone())
                 .header("Range", &format!("items={}-{}", i, i + 99))
                 .send()?
                 .json()?;
@@ -113,11 +108,7 @@ impl User {
         let resp: Schedule = self
             .client
             .get("https://api.somtoday.nl/rest/v1/afspraken")
-            .header(
-                header::AUTHORIZATION,
-                &format!("Bearer {}", self.access_token),
-            )
-            .header(header::ACCEPT, "application/json")
+            .headers(self.headers.clone())
             .query(&[
                 ("begindatum", &format!("{}", begin.format("%Y-%m-%d"))),
                 ("einddatum", &format!("{}", end.format("%Y-%m-%d"))),
@@ -126,6 +117,42 @@ impl User {
             .json()?;
 
         Ok(resp)
+    }
+
+    fn homework_appointments(&self, begin: NaiveDate, end: NaiveDate) -> Res<MultHomework> {
+        let resp: MultHomework = self
+            .client
+            .get("https://api.somtoday.nl/rest/v1/studiewijzeritemafspraaktoekenningen")
+            .headers(self.headers.clone())
+            .query(&[("begintNaOfOp", &format!("{}", begin.format("%Y-%m-%d")))])
+            .send()?
+            .json()?;
+
+        let filtered: Vec<Homework> = resp
+            .items
+            .into_iter()
+            .filter(|item| item.date_time.date_naive() < end)
+            .collect();
+
+        Ok(MultHomework { items: filtered })
+    }
+
+    fn homework_days(&self, begin: NaiveDate, end: NaiveDate) -> Res<MultHomework> {
+        let resp: MultHomework = self
+            .client
+            .get("https://api.somtoday.nl/rest/v1/studiewijzeritemdagtoekenningen")
+            .headers(self.headers.clone())
+            .query(&[("begintNaOfOp", &format!("{}", begin.format("%Y-%m-%d")))])
+            .send()?
+            .json()?;
+
+        let filtered: Vec<Homework> = resp
+            .items
+            .into_iter()
+            .filter(|item| item.date_time.date_naive() < end)
+            .collect();
+
+        Ok(MultHomework { items: filtered })
     }
 }
 
@@ -137,15 +164,30 @@ fn main() -> Res<()> {
 
     let id = user.id()?;
     println!("id: {id}");
+
     let subjects = user.subjects()?;
     println!("subjects:\n{subjects:#?}");
+
     let grades = user.grades()?;
     println!("grades:\n{grades:#?}");
+
     let schedule = user.schedule(
-        NaiveDate::from_ymd_opt(2023, 6, 19).unwrap(),
-        NaiveDate::from_ymd_opt(2023, 7, 24).unwrap(),
+        NaiveDate::from_ymd_opt(2023, 6, 12).unwrap(),
+        NaiveDate::from_ymd_opt(2023, 6, 17).unwrap(),
     )?;
     println!("schedule:\n{schedule:#?}");
+
+    let hw_appointments = user.homework_appointments(
+        NaiveDate::from_ymd_opt(2023, 6, 12).unwrap(),
+        NaiveDate::from_ymd_opt(2023, 6, 17).unwrap(),
+    )?;
+    println!("hw_appointments:\n{hw_appointments:#?}");
+
+    let hw_days = user.homework_days(
+        NaiveDate::from_ymd_opt(2023, 6, 12).unwrap(),
+        NaiveDate::from_ymd_opt(2023, 6, 17).unwrap(),
+    )?;
+    println!("hw_days:\n{hw_days:#?}");
 
     Ok(())
 }
