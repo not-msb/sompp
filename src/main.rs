@@ -1,19 +1,10 @@
 use chrono::NaiveDate;
-use clap::Parser;
 use reqwest::{
     blocking::Client,
     header::{self, HeaderMap, HeaderValue},
 };
-use sompp::types::*;
+use sompp::{types::*, Res};
 use std::collections::HashMap;
-
-type Res<T> = Result<T, Box<dyn std::error::Error>>;
-
-#[derive(Parser)]
-struct Args {
-    #[arg(short, long)]
-    access_token: String,
-}
 
 struct User {
     client: Client,
@@ -157,8 +148,8 @@ impl User {
 }
 
 fn main() -> Res<()> {
-    let args = Args::parse();
-    let user = User::new(args.access_token)?;
+    let user_data = UserData::new()?;
+    let user = User::new(user_data.access_token)?;
 
     println!("\n########\nStarting\n########\n");
 
