@@ -169,7 +169,6 @@ fn between(input: &str, prefix: &str, postfix: &str) -> String {
     while !input[e..].starts_with(postfix) {
         e += 1;
     }
-    e += prefix.len();
 
     input[b..e].to_owned()
 }
@@ -177,7 +176,7 @@ fn between(input: &str, prefix: &str, postfix: &str) -> String {
 // END TMP
 
 fn main() -> Res<()> {
-    let url = UserData::url();
+    let (url, verifier) = UserData::url();
 
     let mut event_loop = EventLoop::new();
     let window = WindowBuilder::new()
@@ -224,7 +223,9 @@ fn main() -> Res<()> {
         }
     };
 
-    let user_data = UserData::with_code(code)?;
+    println!("{code}");
+
+    let user_data = UserData::with_code(code, &verifier)?;
     let user = User::new(user_data.access_token)?;
 
     println!("\n########\nStarting\n########\n");

@@ -14,7 +14,7 @@ pub struct UserData {
 }
 
 impl UserData {
-    pub fn url() -> String {
+    pub fn url() -> (String, String) {
         const REDIRECT_URI: &str = "somtodayleerling://oauth/callback";
         const SCHOOL_UUID: &str = "ec284fda-3d0f-4f54-a77e-91d94b94ff1a";
         const CLIENT_ID: &str = "D50E0C06-32D1-4B41-A137-A9A850C892C2";
@@ -22,7 +22,7 @@ impl UserData {
         let verifier = url_encode(&random_bytes(32));
         let challenge = url_encode(&sha256(verifier.as_bytes()));
 
-        format!("https://inloggen.somtoday.nl/oauth2/authorize?response_type=code&prompt=login&redirect_uri={REDIRECT_URI}&client_id={CLIENT_ID}&state=sompp&response_type=code&scope=openid&tenant_uuid={SCHOOL_UUID}&session=no_session&code_challenge_method=S256&code_challenge={challenge}")
+        (format!("https://inloggen.somtoday.nl/oauth2/authorize?response_type=code&prompt=login&redirect_uri={REDIRECT_URI}&client_id={CLIENT_ID}&state=sompp&response_type=code&scope=openid&tenant_uuid={SCHOOL_UUID}&session=no_session&code_challenge_method=S256&code_challenge={challenge}"), verifier)
     }
 
     pub fn new() -> Res<UserData> {
@@ -61,10 +61,9 @@ impl UserData {
         Ok(resp)
     }
 
-    pub fn with_code(code: &str) -> Res<UserData> {
+    pub fn with_code(code: &str, verifier: &str) -> Res<UserData> {
         const REDIRECT_URI: &str = "somtodayleerling://oauth/callback";
         const CLIENT_ID: &str = "D50E0C06-32D1-4B41-A137-A9A850C892C2";
-        let verifier = url_encode(&random_bytes(32));
 
         let client = reqwest::blocking::Client::new();
         let resp = client
@@ -73,15 +72,15 @@ impl UserData {
             .query(&[
                 ("grant_type", "authorization_code"),
                 ("redirect_uri", REDIRECT_URI),
-                ("code_verifier", &verifier),
+                ("code_verifier", verifier),
                 ("code", code),
                 ("scope", "openid"),
                 ("client_id", CLIENT_ID),
             ])
             .send()?
-            .json()?;
+            .text()?;
 
-        Ok(resp)
+        todo!("{resp}")
     }
 }
 
