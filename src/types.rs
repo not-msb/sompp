@@ -78,9 +78,9 @@ impl UserData {
                 ("client_id", CLIENT_ID),
             ])
             .send()?
-            .text()?;
+            .json()?;
 
-        todo!("{resp}")
+        Ok(resp)
     }
 }
 

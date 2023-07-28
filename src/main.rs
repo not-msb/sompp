@@ -182,7 +182,7 @@ fn main() -> Res<()> {
     let window = WindowBuilder::new()
         .with_title("Som++")
         .build(&event_loop)?;
-    let webview = WebViewBuilder::new(window)?
+    let _webview = WebViewBuilder::new(window)?
         .with_navigation_handler(|uri| -> bool {
             if uri.starts_with("somtodayleerling://") {
                 println!("found SomToday scheme!");
@@ -196,8 +196,6 @@ fn main() -> Res<()> {
         })
         .with_url(&url)?
         .build()?;
-
-    webview.open_devtools();
 
     let _ = event_loop.run_return(|event, _, control_flow| {
         *control_flow = unsafe {
@@ -222,8 +220,6 @@ fn main() -> Res<()> {
             None => todo!("Return some error"),
         }
     };
-
-    println!("{code}");
 
     let user_data = UserData::with_code(code, &verifier)?;
     let user = User::new(user_data.access_token)?;
