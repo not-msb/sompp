@@ -5,6 +5,13 @@ use reqwest::{
 };
 use sompp::{types::*, Res};
 use std::collections::HashMap;
+use wry::application::event::Event;
+use wry::application::event::WindowEvent;
+use wry::application::event_loop::ControlFlow;
+use wry::application::event_loop::EventLoop;
+use wry::application::platform::run_return::EventLoopExtRunReturn;
+use wry::application::window::WindowBuilder;
+use wry::webview::WebViewBuilder;
 
 struct User {
     client: Client,
@@ -147,8 +154,77 @@ impl User {
     }
 }
 
+// TMP
+
+static mut CODE: Option<String> = None;
+
+fn between(input: &str, prefix: &str, postfix: &str) -> String {
+    let mut b = 0;
+    while !input[b..].starts_with(prefix) {
+        b += 1;
+    }
+    b += prefix.len();
+
+    let mut e = b;
+    while !input[e..].starts_with(postfix) {
+        e += 1;
+    }
+    e += prefix.len();
+
+    input[b..e].to_owned()
+}
+
+// END TMP
+
 fn main() -> Res<()> {
-    let user_data = UserData::new()?;
+    let url = UserData::url();
+
+    let mut event_loop = EventLoop::new();
+    let window = WindowBuilder::new()
+        .with_title("Som++")
+        .build(&event_loop)?;
+    let webview = WebViewBuilder::new(window)?
+        .with_navigation_handler(|uri| -> bool {
+            if uri.starts_with("somtodayleerling://") {
+                println!("found SomToday scheme!");
+                unsafe {
+                    CODE = Some(between(&uri, "code=", "&"));
+                }
+                false
+            } else {
+                true
+            }
+        })
+        .with_url(&url)?
+        .build()?;
+
+    webview.open_devtools();
+
+    let _ = event_loop.run_return(|event, _, control_flow| {
+        *control_flow = unsafe {
+            match &CODE {
+                Some(_) => ControlFlow::Exit,
+                None => ControlFlow::Wait,
+            }
+        };
+
+        if let Event::WindowEvent {
+            event: WindowEvent::CloseRequested,
+            ..
+        } = event
+        {
+            *control_flow = ControlFlow::Exit;
+        }
+    });
+
+    let code = unsafe {
+        match &CODE {
+            Some(c) => c,
+            None => todo!("Return some error"),
+        }
+    };
+
+    let user_data = UserData::with_code(code)?;
     let user = User::new(user_data.access_token)?;
 
     println!("\n########\nStarting\n########\n");
