@@ -1,14 +1,13 @@
 [package]
-name = "sompp"
+name = "sompp-tools"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 base64 = "0.21.2"
-chrono = { version = "0.4.26", features = ["serde"] }
-rand = "0.8.5"
-regex = "1.9.1"
-reqwest = { version = "0.11.18", features = ["blocking", "json"] }
+chrono = { version = "0.4.26", default-features = false, features = ["std", "serde"] }
+fastrand = "2.0.0"
 serde = { version = "1.0.163", features = ["derive"] }
 sha2 = "0.10.7"
-wry = { version = "0.30.0" }
+ureq = { version = "2.7.1", default-features = false, features = ["tls", "json"] }
+#wry = { version = "0.30.0", default-features = false }
