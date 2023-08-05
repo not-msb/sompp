@@ -1,6 +1,6 @@
 use crate::{tools::*, Res};
 use chrono::{DateTime, Utc, NaiveDate};
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use std::io::stdin;
 use std::process::Command;
 use std::collections::HashMap;
@@ -130,14 +130,14 @@ impl User {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserUrl {
     pub url: String,
     pub verifier: String,
     pub challenge: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserData {
     pub access_token: String,
     pub refresh_token: String,
@@ -191,6 +191,8 @@ impl UserData {
             .call()?
             .into_json()?;
 
+        println!("Resp: {resp:#?}");
+
         Ok(resp)
     }
 
@@ -213,17 +215,17 @@ impl UserData {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Link {
     pub id: usize,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Student {
     pub links: Vec<Link>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Subject {
     #[serde(rename = "naam")]
     pub name: String,
@@ -231,7 +233,7 @@ pub struct Subject {
     pub acronym: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Grade {
     #[serde(rename = "resultaat")]
     pub result: Option<String>,
@@ -243,14 +245,14 @@ pub struct Grade {
     pub subject: Subject,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Appointment {
     #[serde(rename = "titel")]
     pub title: String,
     pub links: Vec<Link>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Homework {
     #[serde(rename = "studiewijzerItem")]
     pub studiewijzer_item: StudiewijzerItem,
@@ -260,13 +262,13 @@ pub struct Homework {
     pub date_time: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LessonGroup {
     #[serde(rename = "vak")]
     pub subject: Subject,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct StudiewijzerItem {
     #[serde(rename = "onderwerp")]
     pub topic: String,
@@ -274,27 +276,27 @@ pub struct StudiewijzerItem {
     pub description: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Students {
     pub items: Vec<Student>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Subjects {
     pub items: Vec<Subject>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Grades {
     pub items: Vec<Grade>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Schedule {
     pub items: Vec<Appointment>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct MultHomework {
     pub items: Vec<Homework>,
 }

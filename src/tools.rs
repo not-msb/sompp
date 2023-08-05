@@ -20,7 +20,7 @@ pub fn sha256(bytes: &[u8]) -> Vec<u8> {
     return result.as_slice().to_vec();
 }
 
-pub fn between(input: &str, prefix: &str, postfix: &str) -> String {
+pub fn between<'a>(input: &'a str, prefix: &str, postfix: &str) -> &'a str {
     let mut b = 0;
     while !input[b..].starts_with(prefix) {
         b += 1;
@@ -32,5 +32,5 @@ pub fn between(input: &str, prefix: &str, postfix: &str) -> String {
         e += 1;
     }
 
-    input[b..e].to_owned()
+    &input[b..e]
 }

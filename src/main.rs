@@ -1,62 +1,8 @@
-use sompp::{types::*, Res, tools::*};
+use sompp_tools::{types::*, Res};
 use chrono::NaiveDate;
-use wry::application::event::Event;
-use wry::application::event::WindowEvent;
-use wry::application::event_loop::ControlFlow;
-use wry::application::event_loop::EventLoop;
-use wry::application::platform::run_return::EventLoopExtRunReturn;
-use wry::application::window::WindowBuilder;
-use wry::webview::WebViewBuilder;
-
-static mut CODE: Option<String> = None;
 
 fn main() -> Res<()> {
-    let user_url = UserData::url();
-
-    let mut event_loop = EventLoop::new();
-    let window = WindowBuilder::new()
-        .with_title("Som++")
-        .build(&event_loop)?;
-    let _webview = WebViewBuilder::new(window)?
-        .with_navigation_handler(|uri| -> bool {
-            if uri.starts_with("somtodayleerling://") {
-                println!("found SomToday scheme!");
-                unsafe {
-                    CODE = Some(between(&uri, "code=", "&"));
-                }
-                false
-            } else {
-                true
-            }
-        })
-        .with_url(&user_url.url)?
-        .build()?;
-
-    let _ = event_loop.run_return(|event, _, control_flow| {
-        *control_flow = unsafe {
-            match &CODE {
-                Some(_) => ControlFlow::Exit,
-                None => ControlFlow::Wait,
-            }
-        };
-
-        if let Event::WindowEvent {
-            event: WindowEvent::CloseRequested,
-            ..
-        } = event
-        {
-            *control_flow = ControlFlow::Exit;
-        }
-    });
-
-    let code = unsafe {
-        match &CODE {
-            Some(c) => c,
-            None => todo!("Return some error"),
-        }
-    };
-
-    let user_data = UserData::with_code(code, &user_url.verifier)?;
+    let user_data = UserData::new()?;
     let user = User::new(user_data)?;
 
     println!("\n########\nStarting\n########\n");
